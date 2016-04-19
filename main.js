@@ -1,9 +1,16 @@
 var getAppointments = function(query){
-	query = query || "";
+	var query = query || "";
 
-	alert("testing");
+	alert(query);
+	//call CGI script with getAppointments param
 }
 
 $(document).ready(function(){
 	getAppointments();
+	
+	$("#search_form").submit(function(e) {
+		var query = $("#q").val(); 
+		getAppointments();
+		e.preventDefault();
+	});
 });

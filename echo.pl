@@ -5,29 +5,32 @@ use warnings;
 use CGI;
 use DBI;
 
+my $db_name = "appointments";
+
 my $q = CGI->new;
-my $db = DBI->connect('dbi:mysql:appointments', 'root', '') or die "Database connection error";
+my $db = DBI->connect("dbi:mysql:$db_name", 'root', '') or die "Database connection error";
 
 
 if ($q->param()){
 	if (length $q->param('getAppointments')) {
 		# return the JSON
+		exit
 	} else { # form was submitted
-		#update the database
-		update_database();
-		display_page($q);
+		my $date = $q->param('date');
+		my $time = $q->param('time');
+		my $desc = $q->param('desc');
+
+		update_database($date, $time, $desc);
 	}
-	
-} else {
-	display_page($q);
 }
+display_page($q);
 
 sub update_database {
-	
-	# combine date/time into one field
-	# get description
-	# prep SQL
-	# run query
+	my ($date, $time, $desc) = @_;
+	my $sql = "INSERT INTO $db_name(time,description) VALUES('$date $time','$desc')";
+
+	my $prepared_sql = $db->prepare($sql);
+	$prepared_sql->execute;	
 }
 
 sub display_page {
@@ -37,7 +40,7 @@ sub display_page {
 		-style=>{'src'=>'/css/main.css'});
 
 	print $q->start_form(-method=>'post',
-		-action=>'',
+		-action=>'/cgi-bin/echo.pl',
 		-id=>'add_forma');
 
 	print $q->submit(-name=>'new_add', -value=>'New');
@@ -45,11 +48,11 @@ sub display_page {
 	print $q->br;
 
 	print "<label for='date'>Date </label>";
-	print $q->input(-type=>'date', -name=>'date', -id=>'date');
+	print "<input type='date' name='date' id='date' min='1753-01-01' max='9999-12-31'>";
 	print $q->br;
 
 	print "<label for='time'>Time </label>";
-	print $q->textfield(-name=>'time', -id=>'time');
+	print "<input type='time' name='time' id='time'>";
 	print $q->br;
 
 	print "<label for='desc'>Desc </label>";
@@ -61,10 +64,9 @@ sub display_page {
 	print $q->br;
 
 	print $q->start_form(-method=>'get',
-		-action=>'/cgi-bin/echo.pl',
 		-id=>'search_form');
 
-	print $q->textfield(-name=>'query',-id=>'query');
+	print $q->textfield(-name=>'q',-id=>'q');
 	print $q->submit(-name=>'new_add', -value=>'Search');
 
 	print $q->end_form;
