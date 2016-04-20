@@ -11,13 +11,8 @@ my $db_name = "appointments";
 my $q = CGI->new;
 my $db = DBI->connect("dbi:mysql:$db_name", 'root', '') or die "Database connection error";
 
-# testing
-#$q->param('q','est');
-#get_appointments();
-#exit;
-
 if ($q->param()){
-	if (length $q->param('getAppointments')) {
+	if (length $q->param('getAppointments')) { # ajax call
 		get_appointments();
 	} else { # form was submitted
 		my $date = $q->param('date');
@@ -47,6 +42,7 @@ sub get_appointments {
 		push @results, $row;
 	}
 
+	# return JSON
 	print $q->header('application/json');
 	print objToJson( { appointments => \@results } );
 
@@ -55,6 +51,8 @@ sub get_appointments {
 
 sub update_database {
 	my ($date, $time, $desc) = @_;
+	
+	# only update if date and time are present
 	if (length $date && length $time) {
 		my $sql = "INSERT INTO $db_name(time,description) VALUES('$date $time','$desc')";
 

@@ -1,4 +1,4 @@
-var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]; //needed for converting Date format
 
 var getAppointments = function(query){
 	var query = query || "";
@@ -8,17 +8,14 @@ var getAppointments = function(query){
 		data+="&q="+query;
 	}
 
-	//call CGI script with getAppointments param
+	//call CGI script
 	$.ajax({
 		type: "GET",
 		url: "/cgi-bin/echo.pl",
 		dataType: "json",
 		data: data,
-		error: function(a,b,c) {
-			alert(b);
-		},
-		success: function(perl_data, textStatus, jqXHR) {
-			makeTable(perl_data);
+		success: function(json_data, textStatus, jqXHR) {
+			makeTable(json_data);
 		}
 	});
 }
@@ -35,17 +32,14 @@ var makeTable = function(data){
 		row = $("<tr />");
 		table.append(row);
 
-		//separate date and time
+		//separate and format date and time
 		datetime = new Date(appointments[c].time);
-		dateString = months[datetime.getMonth()]
-			+" "+datetime.getDate()+" "+datetime.getFullYear();
+		dateString = months[datetime.getMonth()] + " " + datetime.getDate() + " " + datetime.getFullYear();
 
 		hour = datetime.getHours();
 		ampm = hour > 12 ? "pm" : "am";
-		// convert to 12 hour format, set to 12 if hour is 0 
-		hour = hour ? hour%12 : 12;
-		timeString = hour+":"
-			+("0"+datetime.getMinutes()).slice(-2)+ampm;
+		hour = hour ? hour%12 : 12; // convert to 12 hour format, set to 12 if hour==0 
+		timeString = hour + ":" + ("0" + datetime.getMinutes()).slice(-2) + ampm;
 
 		desc = appointments[c].description;	
 
@@ -58,8 +52,8 @@ var makeTable = function(data){
 
 $(document).ready(function(){
 	var addFormDisplayed = false;
-	getAppointments();
-	$(".add").hide();
+	getAppointments(); //populate table
+	$(".add").hide(); //hide extra form elements
 	
 	$("#search_form").submit(function(e) {
 		var query = $("#q").val(); 
@@ -68,8 +62,8 @@ $(document).ready(function(){
 	});
 
 	$("#new_add").click(function(e) {
+		//toggle button text, show add form
 		if (!addFormDisplayed) {
-			//change add to new
 			$("#new_add").val("Add");
 			addFormDisplayed = true;
 			$(".add").show();
@@ -78,6 +72,7 @@ $(document).ready(function(){
 	});
 
 	$("#cancel").click(function(e) {
+		//toggle button text, hide add form
 		$("#new_add").val("New");
 		addFormDisplayed = false;
 		$(".add").hide();
