@@ -1,3 +1,5 @@
+var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 var getAppointments = function(query){
 	var query = query || "";
 	var data = "getAppointments=true";
@@ -12,8 +14,8 @@ var getAppointments = function(query){
 		url: "/cgi-bin/echo.pl",
 		dataType: "json",
 		data: data,
-		error: function() {
-			alert("fail");
+		error: function(a,b,c) {
+			alert(b);
 		},
 		success: function(perl_data, textStatus, jqXHR) {
 			makeTable(perl_data);
@@ -24,21 +26,26 @@ var getAppointments = function(query){
 var makeTable = function(data){
 	var table = $("<table />");
 	var appointments = data.appointments;
-	var row, datetime, date, dateString, time, timeString, desc;
+	var row, datetime, date, dateString, hour, ampm, time, timeString, desc;
+
+	row = $("<tr><th>Date</th><th>Time</th><th>Description</th></tr>");
+	table.append(row);
 
 	for (var c=0; c<appointments.length; c++) {
 		row = $("<tr />");
 		table.append(row);
 
 		//separate date and time
-		datetime = appointments[c].time;
-		alert(datetime);
-		var a = new Date(datetime);
-		alert(a);
-		date = new Date(datetime.split(" ")[0]);
-		dateString = date.getMonth()+" "+date.getDate();
+		datetime = new Date(appointments[c].time);
+		dateString = months[datetime.getMonth()]
+			+" "+datetime.getDate()+" "+datetime.getFullYear();
 
-		time = datetime.split(" ")[1];
+		hour = datetime.getHours();
+		ampm = hour > 12 ? "pm" : "am";
+		// convert to 12 hour format, set to 12 if hour is 0 
+		hour = hour ? hour%12 : 12;
+		timeString = hour+":"
+			+("0"+datetime.getMinutes()).slice(-2)+ampm;
 
 		desc = appointments[c].description;	
 
@@ -46,15 +53,33 @@ var makeTable = function(data){
 		row.append($("<td>" + timeString + "</td>"));
 		row.append($("<td>" + desc + "</td>"));
 	}
-	$("#appointments").append(table);
+	$("#appointments").html(table);
 }
 
 $(document).ready(function(){
+	var addFormDisplayed = false;
 	getAppointments();
+	$(".add").hide();
 	
 	$("#search_form").submit(function(e) {
 		var query = $("#q").val(); 
-		getAppointments();
+		getAppointments(query);
 		e.preventDefault();
+	});
+
+	$("#new_add").click(function(e) {
+		if (!addFormDisplayed) {
+			//change add to new
+			$("#new_add").val("Add");
+			addFormDisplayed = true;
+			$(".add").show();
+			e.preventDefault();
+		}
+	});
+
+	$("#cancel").click(function(e) {
+		$("#new_add").val("New");
+		addFormDisplayed = false;
+		$(".add").hide();
 	});
 });
