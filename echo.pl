@@ -4,17 +4,20 @@ use strict;
 use warnings;
 use CGI;
 use DBI;
+use JSON;
 
 my $db_name = "appointments";
 
 my $q = CGI->new;
 my $db = DBI->connect("dbi:mysql:$db_name", 'root', '') or die "Database connection error";
 
+# testing
+#get_appointments();
+#exit;
 
 if ($q->param()){
 	if (length $q->param('getAppointments')) {
-		# return the JSON
-		exit
+		get_appointments();
 	} else { # form was submitted
 		my $date = $q->param('date');
 		my $time = $q->param('time');
@@ -24,6 +27,29 @@ if ($q->param()){
 	}
 }
 display_page($q);
+
+sub get_appointments {
+	my @results;
+
+	# call the DB, select based on query
+	my $sql = "SELECT * FROM $db_name";
+	my $query = $q->param('q');
+	if (length $query) {
+		$sql += " WHERE INSTR(description,'$query')>0";
+	}
+
+	my $prepared_sql = $db->prepare($sql);
+	$prepared_sql->execute;	
+	
+	while (my $row = $prepared_sql->fetchrow_hashref) {
+		push @results, $row;
+	}
+
+	print $q->header('application/json');
+	print objToJson( { appointments => \@results } );
+
+	exit;
+}
 
 sub update_database {
 	my ($date, $time, $desc) = @_;
@@ -48,7 +74,7 @@ sub display_page {
 	print $q->br;
 
 	print "<label for='date'>Date </label>";
-	print "<input type='date' name='date' id='date' min='1753-01-01' max='9999-12-31'>";
+	print "<input type='date' name='date' id='date' min='1900-01-01' max='2079-06-06'>";
 	print $q->br;
 
 	print "<label for='time'>Time </label>";
